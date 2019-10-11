@@ -1,8 +1,9 @@
 module.exports = app => {
     function existsOrErros(value , msg){
-    // mostra mensagem se tiver erro ou seja valor vazio
+    // mostra mensagem se tiver erro ou seja valor vazio , throw lanca o erro
         if(!value) throw msg    
         if(Array.isArray(value) && value.length === 0) throw msg
+        // verifica se a string esta vazia
         if(typeof value === 'string' && !value.trim()) throw msg
     }
     
