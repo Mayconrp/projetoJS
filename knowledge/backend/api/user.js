@@ -2,7 +2,7 @@ const bcrypt = require('bcrypt-nodejs')
 
 // representa a instancia do express
 module.exports = app => {
-    const {existsOrErros , notExistsOrError , equalsOrError} = app.api.validation
+    const {existsOrError , notExistsOrError , equalsOrError} = app.api.validation
 
     // funcao arrow para encriptografar a senha
     const encryptPassword = password => {
@@ -17,11 +17,11 @@ module.exports = app => {
         if(req.params.id) user.id = req.params.id        
 
         try {
-            existsOrErros(user.name , 'Nome não informado' )
-            existsOrErros(user.email , 'E-mail não informado' )
-            existsOrErros(user.password , 'Senha não informado' )
-            existsOrErros(user.confirmPassword , 'Confirmação de senha inválida' )
-            existsOrErros(user.password === user.confirmPassword , 'Senhas não conferem' )
+            existsOrError(user.name , 'Nome não informado' )
+            existsOrError(user.email , 'E-mail não informado' )
+            existsOrError(user.password , 'Senha não informado' )
+            existsOrError(user.confirmPassword , 'Confirmação de senha inválida' )
+            existsOrError(user.password === user.confirmPassword , 'Senhas não conferem' )
 
             // db via knex
             const userFromDB = await app.db('users')
@@ -45,18 +45,14 @@ module.exports = app => {
                 .where({id : user.id})
                 .then(_ => res.status(204).send())
                 .catch(err => res.status(500).send(err))
-                console.log("")
                 console.log("atualizando o usuário " + "id: " + user.id + " nome: " + user.name)
-                console.log("")
         }else{
             // inclui user se o id não existir            
             app.db('users')
                 .insert(user)
                 .then(_ => res.status(204).send())
                 .catch(err => res.status(500).send(err))
-                console.log("")
-                console.log("novo usuário nome: " + user.name)
-                console.log("")
+                console.log("novo usuário adicionado: " + user.name)
         }
     }
 
@@ -68,6 +64,16 @@ module.exports = app => {
             .catch(err => res.status(500).send(err))
 
     }
+// pegando usuario por id
+    const getById = (req, res) => {
+        app.db('users')
+            .select('id' , 'name' , 'email' , 'admin')
+            .where({id : req.params.id})
+            .first()
+            .then(user => res.json(user))
+            .catch(err => res.status(500).send(err))
 
-    return { save , get }
+    }
+
+    return { save , get , getById }
 }

@@ -1,5 +1,5 @@
 module.exports = app => {
-    function existsOrErros(value , msg){
+    function existsOrError(value , msg){
     // mostra mensagem se tiver erro ou seja valor vazio , throw lanca o erro
         if(!value) throw msg    
         if(Array.isArray(value) && value.length === 0) throw msg
@@ -20,5 +20,5 @@ module.exports = app => {
         if(valueA !== valueB) throw msg
     }
 
-    return { existsOrErros , notExistsOrError , equalsOrError}
+    return { existsOrError , notExistsOrError , equalsOrError}
 }
