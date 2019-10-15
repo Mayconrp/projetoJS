@@ -1,6 +1,6 @@
 module.exports = app => {
 
-    const {existsOrError , NotExistsOrError} = app.api.validation
+    const {existsOrError , notExistsOrError} = app.api.validation
 
         // salvar categoria
         const save  = (req , res) => {
@@ -35,21 +35,19 @@ module.exports = app => {
                 // fazendo consulta no banco de dados com await
                 const subcategory = await app.db('categories')
                     .where({ parentId : req.params.id })                    
-                NotExistsOrError(subcategory , 'Não foi possível excluir, categoria possui subcategorias.')
+                notExistsOrError(subcategory , 'Não foi possível excluir, categoria possui subcategorias.')
 
                 const articles = await app.db('articles')
                     .where({categoryId : req.params.id})
-                NotExistsOrError(articles , 'Não foi possível excluir, categoria possui artigos.')
-
-                rowsDeleted = await app.db('categories')
+                notExistsOrError(articles , 'Não foi possível excluir, categoria possui artigos.')
+                
+                const rowsDeleted = await app.db('categories')
                     .where({ id : req.params.id}).del()
                 existsOrError(rowsDeleted, 'Categoria não foi encontrada')
 
                 res.status(204).send()
-
-            } catch (msg) {
-                res.status(400).send(msg)
-                return 
+            } catch(msg) {
+                res.status(400).send(msg) 
             }
         }
         // receber e retornar uma lista de categorias , monta o path da lista
@@ -91,7 +89,7 @@ module.exports = app => {
                 .catch(err => res.status(500).send(err))
        } 
 
-       const getById = (req , res) => {
+        const getById = (req , res) => {
             app.db('categories')
                 .where({ id: req.params.id })
                 .first()
@@ -100,7 +98,31 @@ module.exports = app => {
         
        }
 
-    return {save, remove, get, getById}
+       // montar a estrutura em árvore de categorias
+        const toTree = (categories, tree) => {
+           // forma categoria primária
+            if(!tree) tree = categories.filter(c => !c.parentId) 
+            tree = tree.map(parentNode => {
+                // filtrar os filhos direto do pai transformando em árvore
+                const isChild = node => node.parentId == parentNode.id
+                parentNode.children = toTree(categories, categories.filter(isChild))
+                return parentNode
+            })    
+            return tree
+
+       }
+
+        const getTree = (req, res) => {
+            app.db('categories')
+                .then(categories => res.json(toTree(categories)))
+                // arvore com path
+                //.then categories => res.json toTree withPath categories 
+                .catch(err => res.status(500).send(err))
+       }
+
+
+
+    return { save, remove, get, getById, getTree }
 
     
 }

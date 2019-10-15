@@ -3,7 +3,6 @@ module.exports = app => {
     // consign facilita no carregamento estrutura
     //metodo post
         .post(app.api.user.save)
-    // criado em user.js
         .get(app.api.user.get)
 
     app.route('/users/:id')
@@ -15,8 +14,23 @@ module.exports = app => {
         .get(app.api.category.get)
         .post(app.api.category.save)
 
+    // cuidado na ordem das rotas
+
+    app.route('/categories/tree')
+        .get(app.api.category.getTree) 
+
     app.route('/categories/:id')
         .get(app.api.category.getById)
         .put(app.api.category.save)
         .delete(app.api.category.remove)
+
+    app.route('/articles')
+        .get(app.api.article.get)
+        .post(app.api.article.save)
+
+    app.route('/articles/:id')
+        .get(app.api.article.getById)
+        .put(app.api.article.save)
+        .delete(app.api.article.remove)
+
 }
