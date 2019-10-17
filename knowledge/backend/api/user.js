@@ -8,12 +8,12 @@ module.exports = app => {
     const encryptPassword = password => {
         const salt = bcrypt.genSaltSync(10)
         // gera o hash da senha
-        return bcrypt.hashSync(password , salt)
+        return bcrypt.hashSync(password, salt)
     }
 
-    const save = async (req , res ) => {
+    const save = async (req, res ) => {
         // json pelo corpo na requisisao
-        const user = {...req.body}
+        const user = { ...req.body }
         if(req.params.id) user.id = req.params.id        
 
         try {
@@ -21,15 +21,14 @@ module.exports = app => {
             existsOrError(user.email , 'E-mail não informado' )
             existsOrError(user.password , 'Senha não informado' )
             existsOrError(user.confirmPassword , 'Confirmação de senha inválida' )
-            existsOrError(user.password === user.confirmPassword , 'Senhas não conferem' )
+            equalsOrError(user.password, user.confirmPassword , 'Senhas não conferem' )
 
             // db via knex
             const userFromDB = await app.db('users')
-                .where({email: user.email}).first()
-            if(!user.id){
-                //se não existir ok se existir usuario ele gera o erro 
-                notExistsOrError(userFromDB , 'Usuário já cadastrado')
-            }
+                .where({ email: user.email }).first()
+            
+            //se não existir cadastra se existir usuario ele gera a mensagem de erro
+            notExistsOrError(userFromDB , 'Usuário já cadastrado!')
 
         } catch (msg) {
             return res.status(400).send(msg)
@@ -45,14 +44,14 @@ module.exports = app => {
                 .where({id : user.id})
                 .then(_ => res.status(204).send())
                 .catch(err => res.status(500).send(err))
-                console.log("atualizando o usuário " + "id: " + user.id + " nome: " + user.name)
+                console.log("atualizando o usuário " + "id:" + user.id + " " + user.name)
         }else{
             // inclui user se o id não existir            
             app.db('users')
                 .insert(user)
                 .then(_ => res.status(204).send())
                 .catch(err => res.status(500).send(err))
-                console.log("novo usuário adicionado: " + user.name)
+                console.log("novo usuário cadastrado: " + user.email)                
         }
     }
 
@@ -65,14 +64,25 @@ module.exports = app => {
 
     }
 // pegando usuario por id
-    const getById = (req, res) => {
+    const getById = async (req, res) => {
+        const user = { ...req.body }
+        if(req.params.id) user.id = req.params.id   
+
+        try {
+            const userFromDB = await app.db('users')
+                .where({ id: user.id }).first()
+    
+            existsOrError(userFromDB , 'Usuário não existe!')
+            
+        } catch (msg) {
+            return res.status(400).send(msg)
+        }                
         app.db('users')
             .select('id' , 'name' , 'email' , 'admin')
             .where({id : req.params.id})
             .first()
             .then(user => res.json(user))
             .catch(err => res.status(500).send(err))
-
     }
 
     return { save , get , getById }

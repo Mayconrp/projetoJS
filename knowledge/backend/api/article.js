@@ -1,6 +1,7 @@
+const queries = require('./queries')
 module.exports = app => {
 
-    const { existsOrError, notExistsOrError } = app.api.validation
+    const { existsOrError } = app.api.validation
 
     const save = (req, res) => {
         const article = { ...req.body }
@@ -11,7 +12,7 @@ module.exports = app => {
             existsOrError(article.description, 'Descrição não informada.')
             existsOrError(article.categoryId, 'Categoria não informada.')
             existsOrError(article.userId, 'Autor não informado.')
-            existsOrError(article.content, 'Conteúdo não informado.')
+            existsOrError(article.content, 'Conteúdo não informado.') 
 
         }catch(msg) {
             res.status(400).send(msg)
@@ -54,9 +55,7 @@ module.exports = app => {
     }
 
     const limit = 10 // usado na paginação
-
-    const get = async (req, res) => {
-        
+    const get = async (req, res) => { 
         // espero receber a pagina, caso não esteja setado exiba a pagina 1
         const page = req.query.page || 1
 
@@ -79,10 +78,33 @@ module.exports = app => {
                 article.content = article.content.toString()
                 return res.json(article)
             })
-
-            .catch(err => res.status(500).send(err))
+            .catch(err => res.status(400).send(err))
     }
 
-    return { save, remove, get, getById }
+    const getByCategory = async (req, res) => {
+        //pegar todos artigos da categoria informada e os filhos
+        const categoryId = req.params.id
+
+        const page = req.query.page  || 1
+        // referenciando as queries.js passando o id da categoria obtido através da requisição
+        const categories = await app.db.raw(queries.categoryWithChildren, categoryId)
+        // extrair ids ou seja array de ids
+        const ids = categories.rows.map(c => c.id)
+
+        //querie 
+        app.db({a: 'articles', u: 'users' })
+            .select('a.id', 'a.name', 'a.description', 'a.imgUrl', {author: 'u.name'})
+            .limit(limit).offset(page * limit - limit)
+            .whereRaw('?? = ??', ['u.id', 'a.userId'])
+            // whereIn dentro de ids definidos in 1,2,3
+            .whereIn('categoryId', ids)
+            .orderBy('a.id', 'desc')
+            .then(articles => res.json(articles))
+            .catch(err => res.status(500).send(err))
+
+
+    }
+
+    return { save, remove, get, getById, getByCategory }
 
 }
