@@ -1,4 +1,10 @@
 module.exports = app => {
+
+    // autenticação de users
+    app.post('/signup', app.api.user.save)
+    app.post('/signin', app.api.auth.signin)
+    app.post('/validateToken', app.api.auth.validateToken)
+
     app.route('/users')
     // consign facilita no carregamento estrutura
     //metodo post
