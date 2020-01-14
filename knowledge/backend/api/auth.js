@@ -7,11 +7,9 @@ const bcrypt = require('bcrypt-nodejs')
 module.exports = app => {
 
     const signin = async (req, res) => {
-
         try {
-
              // validar email se veio no corpo da requisição
-            if(!req.body.email || !req.body.password) {
+            if(!req.body.email) {
                 return res.status(400).send('Informe usuário e senha! ')
             }
 
